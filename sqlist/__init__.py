@@ -6,7 +6,7 @@ class SQList:
     """
     List-like object that stores data in SQLite database
     """
-    def __init__(self, values, path=':memory:', key=None, drop=True):
+    def __init__(self, values=None, path=':memory:', key=None, drop=True):
         """
         :param values: iterable with elemets of new list
         :param path: path to file of database
@@ -27,8 +27,8 @@ class SQList:
             self.cursor.execute('''DROP TABLE IF EXISTS `data`;''')
         self.cursor.execute(
             '''CREATE TABLE `data` (`key` BLOB,
-                                    `value` BLOB NOT NULL);'''
-        )
+                                    `value` BLOB NOT NULL);''')
+        self.cursor.execute('''CREATE INDEX `keys_index` ON `data` (`key`);''')
         if values:
             self.cursor.executemany(
                 '''INSERT INTO `data`

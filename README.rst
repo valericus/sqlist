@@ -3,14 +3,14 @@ SQList is like `shelve <https://docs.python.org/3/library/shelve.html>`_ but for
 Usage
 =====
 
-SQLite object behaves mostly like casual Python list. For example you can create SQList from list
+SQLite object behaves mostly like casual Python list. For example you can create SQList from list.
 
 >>> import sqlist
 >>> values = sqlist.SQList([1, 2, 3])
 >>> values
 sqlist.SQList([1, 2, 3])
 
-You can get item from list by index
+You can get item from list by index.
 
 >>> values[0]
 1
