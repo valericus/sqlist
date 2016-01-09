@@ -18,10 +18,12 @@ You can get item from list by index
 3
 
 Slices are available too
+
 >>> values[0:2]
 [1, 2]
 
 You can easily append item to SQList and pop them from it.
+
 >>> values.append(23)
 >>> values
 sqlist.SQList([1, 2, 3, 23])
