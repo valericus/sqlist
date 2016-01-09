@@ -33,7 +33,7 @@ class SQList:
             self.cursor.executemany(
                 '''INSERT INTO `data`
                    (`key`, `value`)
-                   VALUES (?, ?)''',
+                   VALUES (?, ?);''',
                 zip(map(key, values), values)
             )
 
@@ -47,7 +47,7 @@ class SQList:
 
     def __len__(self):
         result = self.cursor.execute(
-            '''SELECT COUNT(*) FROM `data`'''
+            '''SELECT COUNT(*) FROM `data`;'''
         ).fetchone()
         return result[0]
 
@@ -72,7 +72,7 @@ class SQList:
                   SELECT `_rowid_`
                   FROM `data`
                   ORDER BY `key` {order}
-                  LIMIT 1 OFFSET ?;
+                  LIMIT 1 OFFSET ?
                );'''.format(order=self.__get_order(index)),
             (self.key(value), pickle.dumps(value), self.__calc_index(index))
         )
@@ -88,7 +88,7 @@ class SQList:
                   SELECT `_rowid_`
                   FROM `data`
                   ORDER BY `key` {order}
-               )'''.format(order=self.__get_order(index)),
+               );'''.format(order=self.__get_order(index)),
             (self.__calc_index(index), )
         )
 
@@ -106,7 +106,7 @@ class SQList:
         result = self.cursor.execute(
             '''SELECT `_rowid_`
                FROM `data`
-               WHERE `value` = ?''',
+               WHERE `value` = ?;''',
             (pickle.dumps(item))
         )
         return bool(result.fetchone())
@@ -132,7 +132,7 @@ class SQList:
         if result.rowcount:
             rowid, value = result.fetchone()
             self.cursor.execute(
-                '''DELETE FROM `data` WHERE `_rowid_` = ?''', (rowid, )
+                '''DELETE FROM `data` WHERE `_rowid_` = ?;''', (rowid, )
             )
             self.sql.commit()
             return pickle.loads(value)
@@ -141,9 +141,12 @@ class SQList:
 
     def sort(self, key=None):
         if key is None:
-            self.cursor.execute('''UPDATE `data` SET `key` = NULL''')
+            self.cursor.execute('''UPDATE `data` SET `key` = NULL;''')
         elif not callable(key):
             raise TypeError('{} object is not callable'.format(type(key)))
-        self.cursor.execute(
-            '''UPDATE'''
-        )
+        else:
+            self.cursor.execute('''BEGIN TRANSACTION;''')
+            self.key = key
+            for index, value in enumerate(self):
+                self[index] = value
+        self.sql.commit()
