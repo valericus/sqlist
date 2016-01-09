@@ -37,6 +37,9 @@ class SQList:
                 zip(map(key, values), values)
             )
 
+    def __repr__(self):
+        return 'sqlist.SQList({})'.format(repr(list(self[:50])))
+
     @staticmethod
     def __calc_index(index):
         return (- index - 1) if index < 0 else index
@@ -146,7 +149,9 @@ class SQList:
             raise TypeError('{} object is not callable'.format(type(key)))
         else:
             self.cursor.execute('''BEGIN TRANSACTION;''')
+            old_key = self.key
             self.key = key
             for index, value in enumerate(self):
                 self[index] = value
+            self.key = old_key
         self.sql.commit()
