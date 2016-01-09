@@ -1,4 +1,4 @@
-SQList is like `shelve <https://docs.python.org/3/library/shelve.html>`_ but for lists. It serializes data with `pickle <https://docs.python.org/3/library/pickle.html>`_ and puts it into SQLite database.
+SQList is like `shelve <https://docs.python.org/3/library/shelve.html>`_ but for lists. It serializes data with `pickle <https://docs.python.org/3/library/pickle.html>`_ and puts into SQLite database.
 
 Usage
 =====
@@ -17,7 +17,7 @@ You can get item from list by index
 >>> values[-1]
 3
 
-Slices are available too
+Slices are available too.
 
 >>> values[0:2]
 [1, 2]
