@@ -7,8 +7,8 @@ python:
   - "3.4"
   - "3.5"
   - "nightly"
-  - "pypi"
-  - "jython"
+  - "pypy"
+  - "pypy3"
 
 install: "pip install -r requirements.txt"
 
