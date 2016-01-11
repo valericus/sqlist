@@ -102,7 +102,7 @@ class SQList:
             for i in xrange(length):
                 yield self[i]
         except NameError:
-            for i in xrange(length):
+            for i in range(length):
                 yield self[i]
         raise StopIteration
 
