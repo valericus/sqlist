@@ -8,8 +8,8 @@ class SQList:
     """
     def __init__(self, values=None, path=':memory:', key=None, drop=True):
         """
-        :param values: iterable with elemets of new list
-        :param path: path to file of database
+        :param values: iterable with elements of new list
+        :param path: path to file with SQLite database
         :param key: callable object used to sort values of SQList
         :param drop: drop any data in file at path
         """
@@ -21,6 +21,7 @@ class SQList:
         else:
             self.key = lambda x: None
 
+        self.path = path
         self.sql = sqlite3.connect(path)
         self.cursor = self.sql.cursor()
         if drop:
