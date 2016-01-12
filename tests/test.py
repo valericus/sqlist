@@ -1,4 +1,6 @@
 import unittest
+import tempfile
+import os
 
 import sqlist
 
@@ -37,7 +39,7 @@ class TestSQList(unittest.TestCase):
                   for i in sl.cursor.execute('''PRAGMA table_info(`data`);''')]
         self.assertEqual(len(pragma), len(expected_pragma))
         for table in expected_pragma:
-            self.assertIn(table, pragma)
+            self.assertTrue(table in pragma)
 
     def test_constructor_creates_correct_indexes(self):
         """
@@ -48,5 +50,15 @@ class TestSQList(unittest.TestCase):
         self.assertEqual(len(index_list), 1)
         index_name = index_list[0][1]
         index_info = sl.cursor.execute(
-            '''PRAGMA index_info({});'''.format(index_name)).fetchone()
+            '''PRAGMA index_info(%s);''' % index_name).fetchone()
         self.assertEqual(index_info[2], 'key')
+
+    def test_constructor_creates_file_of_database(self):
+        temp_dir = tempfile.mkdtemp()
+        temp_file = os.path.join(temp_dir, 'test_sqlist.db')
+        sl = sqlist.SQList(path=temp_file)
+
+        self.assertTrue(os.path.isfile(temp_file))
+
+        os.remove(temp_file)
+        os.removedirs(temp_dir)
