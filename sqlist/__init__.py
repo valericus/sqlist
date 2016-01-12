@@ -2,7 +2,7 @@ import sqlite3
 import pickle
 
 
-class SQList:
+class SQList(object):
     """
     List-like object that stores data in SQLite database
     """
