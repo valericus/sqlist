@@ -101,4 +101,8 @@ class TestSQList(unittest.TestCase):
         self.assertRaises(IndexError, self.sl.__setitem__, len(self.sl) + 5, 3)
 
     def test_delitem_method(self):
-        pass
+        del self.sl[0]
+        self.assertEqual(len(self.sl), len(self.test_values) - 1)
+        self.assertFalse(self.test_values[0] in self.sl)
+
+        self.assertRaises(IndexError, self.sl.__delitem__, len(self.sl) + 5)

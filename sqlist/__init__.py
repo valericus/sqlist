@@ -95,15 +95,20 @@ class SQList(object):
             self.sql.commit()
 
     def __delitem__(self, index):
-        self.cursor.execute(
+        result = self.cursor.execute(
             '''DELETE FROM `data`
                WHERE `_rowid_` = (
                   SELECT `_rowid_`
                   FROM `data`
                   ORDER BY `key` {order}
+                  LIMIT 1 OFFSET ?
                );'''.format(order=self.__get_order(index)),
             (self.__calc_index(index), )
         )
+        if not result.rowcount:
+            raise IndexError('%s is out of range' % index)
+        else:
+            self.sql.commit()
 
     def __iter__(self):
         for item in self.cursor.execute('''SELECT `value` FROM `data`;'''):
