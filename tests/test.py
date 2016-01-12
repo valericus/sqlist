@@ -11,6 +11,18 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class TestSQList(unittest.TestCase):
+    def setUp(self):
+        self.test_values = [
+            {'foo': 'bar', 'baz': None},
+            [1, 1, 2, 3, 5, 8, 13, 21, 34, 55],
+            set(u'Eyjafjallajökull'),
+            u'埃亚菲亚德拉冰盖'
+        ]
+        self.sl = sqlist.SQList(self.test_values)
+
+    def tearDown(self):
+        del self.sl
+
     def test_calc_index(self):
         self.assertEqual(sqlist.SQList._SQList__calc_index(0), 0)
         self.assertEqual(sqlist.SQList._SQList__calc_index(-1), 0)
@@ -68,15 +80,25 @@ class TestSQList(unittest.TestCase):
         os.remove(temp_file)
         os.removedirs(temp_dir)
 
-    def test_constructor_with_list_of_predefined_values(self):
-        test_values = [
-            {'foo': 'bar', 'baz': None},
-            [1, 1, 2, 3, 5, 8, 13, 21, 34, 55],
-            set(u'Eyjafjallajökull'),
-            u'埃亚菲亚德拉冰盖'
-        ]
-        sl = sqlist.SQList(test_values)
+    def test_constructor_with_list_of_predefined_values_and_contains_method(self):
+        self.assertEqual(len(self.test_values), len(self.sl))
+        for i in self.test_values:
+            self.assertTrue(i in self.sl)
+        self.assertFalse('some_spam_string' in self.sl)
 
-        self.assertEqual(len(test_values), len(sl))
-        for i in test_values:
-            self.assertTrue(i in sl)
+    def test_iter_method(self):
+        self.assertEqual(self.test_values, list(self.sl))
+
+    def test_len_method(self):
+        self.assertEqual(len(self.test_values), len(self.sl))
+
+    def test_setitem_and_getitem_methods(self):
+        for i in range(len(self.sl)):
+            self.sl[i] = self.test_values[i]
+            self.assertEqual(self.sl[i], self.test_values[i])
+
+        self.assertRaises(IndexError, self.sl.__getitem__, len(self.sl) + 5)
+        self.assertRaises(IndexError, self.sl.__setitem__, len(self.sl) + 5, 3)
+
+    def test_delitem_method(self):
+        pass

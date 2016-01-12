@@ -71,11 +71,11 @@ class SQList(object):
                ORDER BY `key` {order}
                LIMIT 1 OFFSET ?;'''.format(order=self.__get_order(index)),
             (self.__calc_index(index), )
-        )
-        if not result.rowcount:
-            raise IndexError('{} is out of range'.format(index))
+        ).fetchone()
+        if result is None:
+            raise IndexError('%s is out of range' % index)
         else:
-            return pickle.loads(result.fetchone()[0])
+            return pickle.loads(result[0])
 
     def __setitem__(self, index, value):
         result = self.cursor.execute(
@@ -90,7 +90,7 @@ class SQList(object):
             (self.key(value), pickle.dumps(value), self.__calc_index(index))
         )
         if not result.rowcount:
-            raise IndexError('{} is out of range'.format(index))
+            raise IndexError('%s is out of range' % index)
         else:
             self.sql.commit()
 
@@ -106,13 +106,8 @@ class SQList(object):
         )
 
     def __iter__(self):
-        length = len(self)
-        try:
-            for i in xrange(length):
-                yield self[i]
-        except NameError:
-            for i in range(length):
-                yield self[i]
+        for item in self.cursor.execute('''SELECT `value` FROM `data`;'''):
+            yield pickle.loads(item[0])
         raise StopIteration
 
     def __contains__(self, item):
