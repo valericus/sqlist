@@ -28,6 +28,7 @@ class SQList(object):
 
         self.path = path
         self.sql = sqlite3.connect(path)
+        self.sql.text_factory = str
         logging.debug('File %s opened as SQLite database' % path)
         self.cursor = self.sql.cursor()
         if drop:
