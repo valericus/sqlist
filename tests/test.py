@@ -54,6 +54,7 @@ class TestSQList(unittest.TestCase):
         ]
         pragma = [{'name': i[1], 'type': i[2], 'notnull': i[3]}
                   for i in sl.cursor.execute('''PRAGMA table_info(`data`);''')]
+        logging.debug('Pragma: %s' % pragma)
         self.assertEqual(len(pragma), len(expected_pragma))
         for table in expected_pragma:
             self.assertTrue(table in pragma)
@@ -66,6 +67,7 @@ class TestSQList(unittest.TestCase):
         index_list = list(sl.cursor.execute('''PRAGMA index_list(`data`);'''))
         self.assertEqual(len(index_list), 1)
         index_name = index_list[0][1]
+        logging.debug('''PRAGMA index_info(%s);''' % index_name)
         index_info = sl.cursor.execute(
             '''PRAGMA index_info(%s);''' % index_name).fetchone()
         self.assertEqual(index_info[2], 'key')
