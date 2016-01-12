@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
+
 import sqlite3
 import pickle
+import logging
 
 
 class SQList(object):
@@ -16,26 +19,31 @@ class SQList(object):
         if key:
             if callable(key):
                 self.key = key
+                logging.debug('Key %s is callable' % key)
             else:
                 raise TypeError('{} object is not callable'.format(type(key)))
         else:
             self.key = lambda x: None
+            logging.debug('Key is not specified, so lambda %s will be used' % self.key)
 
         self.path = path
         self.sql = sqlite3.connect(path)
+        logging.debug('File %s opened as SQLite database' % path)
         self.cursor = self.sql.cursor()
         if drop:
             self.cursor.execute('''DROP TABLE IF EXISTS `data`;''')
+            logging.debug('Tried to drop table `data` in %s' % path)
         self.cursor.execute(
             '''CREATE TABLE `data` (`key` BLOB,
                                     `value` BLOB NOT NULL);''')
         self.cursor.execute('''CREATE INDEX `keys_index` ON `data` (`key`);''')
         if values:
+            logging.debug('Trying to insert values into database')
             self.cursor.executemany(
                 '''INSERT INTO `data`
                    (`key`, `value`)
                    VALUES (?, ?);''',
-                zip(map(key, values), values)
+                zip(map(self.key, values), map(pickle.dumps, values))
             )
 
     def __repr__(self):
@@ -107,11 +115,12 @@ class SQList(object):
         raise StopIteration
 
     def __contains__(self, item):
+        logging.debug('Check if %s (%s) is in SQList' % (repr(item), pickle.dumps(item)))
         result = self.cursor.execute(
             '''SELECT `_rowid_`
                FROM `data`
                WHERE `value` = ?;''',
-            (pickle.dumps(item))
+            (pickle.dumps(item),)
         )
         return bool(result.fetchone())
 

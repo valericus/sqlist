@@ -1,8 +1,13 @@
+# -*- coding: utf-8 -*-
+
 import unittest
 import tempfile
 import os
+import logging
 
 import sqlist
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class TestSQList(unittest.TestCase):
@@ -62,3 +67,16 @@ class TestSQList(unittest.TestCase):
 
         os.remove(temp_file)
         os.removedirs(temp_dir)
+
+    def test_constructor_with_list_of_predefined_values(self):
+        test_values = [
+            {'foo': 'bar', 'baz': None},
+            [1, 1, 2, 3, 5, 8, 13, 21, 34, 55],
+            set(u'Eyjafjallajökull'),
+            u'埃亚菲亚德拉冰盖'
+        ]
+        sl = sqlist.SQList(test_values)
+
+        self.assertEqual(len(test_values), len(sl))
+        for i in test_values:
+            self.assertTrue(i in sl)
