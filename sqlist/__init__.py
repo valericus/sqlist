@@ -165,17 +165,3 @@ class SQList(object):
             return pickle.loads(value)
         else:
             raise IndexError('{} is out of range'.format(index))
-
-    def sort(self, key=None):
-        if key is None:
-            self.cursor.execute('''UPDATE `data` SET `key` = NULL;''')
-        elif not callable(key):
-            raise TypeError('{} object is not callable'.format(type(key)))
-        else:
-            self.cursor.execute('''BEGIN TRANSACTION;''')
-            old_key = self.key
-            self.key = key
-            for index, value in enumerate(self):
-                self[index] = value
-            self.key = old_key
-        self.sql.commit()
