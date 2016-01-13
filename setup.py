@@ -2,19 +2,19 @@ from setuptools import setup, find_packages
 
 setup(
     name='sqlist',
-    version='0.1a',
+    version='0.1b',
     packages = find_packages(),
     description='List-like wrapper for SQLite',
     long_description=open('README.rst').read(),
 
     author='Valery Ryaboshapko',
     author_email='valera@creator.su',
-    license='Python Software Foundation License',
+    license='MIT',
     url='https://github.com/valericus/sqlist',
 
     classifiers=[
-        "Development Status :: 3 - Alpha",
-        "License :: OSI Approved :: Python Software Foundation License",
+        "Development Status :: 4 - Beta",
+        "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.6",
