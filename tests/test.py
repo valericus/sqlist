@@ -102,7 +102,24 @@ class TestSQList(unittest.TestCase):
 
     def test_delitem_method(self):
         del self.sl[0]
+
         self.assertEqual(len(self.sl), len(self.test_values) - 1)
         self.assertFalse(self.test_values[0] in self.sl)
 
         self.assertRaises(IndexError, self.sl.__delitem__, len(self.sl) + 5)
+
+    def test_append_method(self):
+        test_appendix = (1, 2, 3)
+        self.sl.append(test_appendix)
+
+        self.assertEqual(len(self.sl), len(self.test_values) + 1)
+        self.assertEqual(self.sl[-1], test_appendix)
+        self.assertTrue(test_appendix in self.sl)
+
+    def test_pop_method(self):
+        initial_len = len(self.sl)
+
+        self.assertEqual(self.sl.pop(), self.test_values.pop())
+        self.assertEqual(self.sl.pop(0), self.test_values.pop(0))
+        self.assertEqual(self.sl.pop(1), self.test_values.pop(1))
+        self.assertEqual(initial_len - 3, len(self.sl))
