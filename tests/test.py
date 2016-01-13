@@ -23,18 +23,6 @@ class TestSQList(unittest.TestCase):
     def tearDown(self):
         del self.sl
 
-    def test_calc_index(self):
-        self.assertEqual(sqlist.SQList._SQList__calc_index(0), 0)
-        self.assertEqual(sqlist.SQList._SQList__calc_index(-1), 0)
-        self.assertEqual(sqlist.SQList._SQList__calc_index(5), 5)
-        self.assertEqual(sqlist.SQList._SQList__calc_index(-5), 4)
-
-    def test_get_order(self):
-        self.assertEqual(sqlist.SQList._SQList__get_order(0), 'ASC')
-        self.assertEqual(sqlist.SQList._SQList__get_order(-1), 'DESC')
-        self.assertEqual(sqlist.SQList._SQList__get_order(5), 'ASC')
-        self.assertEqual(sqlist.SQList._SQList__get_order(-5), 'DESC')
-
     def test_constructor_creates_correct_table(self):
         """
         Consrtuctor should create one table with two columns
@@ -85,6 +73,13 @@ class TestSQList(unittest.TestCase):
         for i in self.test_values:
             self.assertTrue(i in self.sl)
         self.assertFalse('some_spam_string' in self.sl)
+
+    def test_constructor_with_key_parameter(self):
+        def key(x):
+            return len(x)
+
+        self.assertEqual(list(sqlist.SQList(self.test_values, key=key)),
+                         sorted(self.test_values, key=key))
 
     def test_iter_method(self):
         self.assertEqual(self.test_values, list(self.sl))

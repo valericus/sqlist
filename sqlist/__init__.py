@@ -46,17 +46,10 @@ class SQList(object):
                    VALUES (?, ?);''',
                 zip(map(self.key, values), map(pickle.dumps, values))
             )
+            self.sql.commit()
 
     def __repr__(self):
         return 'sqlist.SQList({})'.format(repr(list(self[:50])))
-
-    @staticmethod
-    def __calc_index(index):
-        return (- index - 1) if index < 0 else index
-
-    @staticmethod
-    def __get_order(index):
-        return 'DESC' if index < 0 else 'ASC'
 
     def __len__(self):
         result = self.cursor.execute(
@@ -65,29 +58,44 @@ class SQList(object):
         return result[0]
 
     def __getitem__(self, index):
-        result = self.cursor.execute(
-            '''SELECT `value`
-               FROM `data`
-               ORDER BY `key` {order}
-               LIMIT 1 OFFSET ?;'''.format(order=self.__get_order(index)),
-            (self.__calc_index(index), )
-        ).fetchone()
-        if result is None:
-            raise IndexError('%s is out of range' % index)
+        if type(index) == int:
+            offset, stop, stride = slice(index, index + 1).indices(len(self))
+        elif type(index) == slice:
+            offset, stop, stride = index.indices(len(self))
         else:
-            return pickle.loads(result[0])
+            raise TypeError('Int or slice expected, %s found' % type(index))
+        limit = stop - offset
+
+        result = self.cursor.execute(
+                '''SELECT `value`
+                   FROM `data`
+                   ORDER BY `key` ASC
+                   LIMIT ? OFFSET ?;''',
+                (limit, offset)
+        )
+
+        if type(index) == int:
+            result = result.fetchone()
+            if result is None:
+                raise IndexError('%s is out of range' % index)
+            else:
+                return pickle.loads(result[0])
+        else:
+            return [pickle.loads(i[0]) for i in result]
 
     def __setitem__(self, index, value):
+        offset, stop, stride = slice(index, index + 1).indices(len(self))
+
         result = self.cursor.execute(
             '''UPDATE `data`
                SET `key` = ?, `value` = ?
                WHERE `_rowid_` = (
                   SELECT `_rowid_`
                   FROM `data`
-                  ORDER BY `key` {order}
+                  ORDER BY `key` ASC
                   LIMIT 1 OFFSET ?
-               );'''.format(order=self.__get_order(index)),
-            (self.key(value), pickle.dumps(value), self.__calc_index(index))
+               );''',
+            (self.key(value), pickle.dumps(value), offset)
         )
         if not result.rowcount:
             raise IndexError('%s is out of range' % index)
@@ -95,15 +103,17 @@ class SQList(object):
             self.sql.commit()
 
     def __delitem__(self, index):
+        offset, stop, stride = slice(index, index + 1).indices(len(self))
+
         result = self.cursor.execute(
             '''DELETE FROM `data`
                WHERE `_rowid_` = (
                   SELECT `_rowid_`
                   FROM `data`
-                  ORDER BY `key` {order}
+                  ORDER BY `key` ASC
                   LIMIT 1 OFFSET ?
-               );'''.format(order=self.__get_order(index)),
-            (self.__calc_index(index), )
+               );''',
+            (offset, )
         )
         if not result.rowcount:
             raise IndexError('%s is out of range' % index)
@@ -111,7 +121,8 @@ class SQList(object):
             self.sql.commit()
 
     def __iter__(self):
-        for item in self.cursor.execute('''SELECT `value` FROM `data`;'''):
+        for item in self.cursor.execute(
+                '''SELECT `value` FROM `data` ORDER BY `key` ASC;'''):
             yield pickle.loads(item[0])
         raise StopIteration
 
@@ -135,13 +146,15 @@ class SQList(object):
         self.sql.commit()
 
     def pop(self, index=-1):
+        offset, stop, stride = slice(index, index + 1).indices(len(self))
+
         self.cursor.execute('BEGIN TRANSACTION;')
         result = self.cursor.execute(
             '''SELECT `_rowid_`, `value`
                FROM `data`
-               ORDER BY `key` {order}
-               LIMIT 1 OFFSET ?;'''.format(order=self.__get_order(index)),
-            (self.__calc_index(index), )
+               ORDER BY `key` ASC
+               LIMIT 1 OFFSET ?;''',
+            (offset, )
         )
         if result.rowcount:
             rowid, value = result.fetchone()
