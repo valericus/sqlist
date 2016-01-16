@@ -25,7 +25,7 @@ class TestSQList(unittest.TestCase):
 
     def test_constructor_creates_correct_table(self):
         """
-        Consrtuctor should create one table with two columns
+        Constructor should create one table with two columns
         """
         sl = sqlist.SQList()
         expected_pragma = [
