@@ -165,3 +165,51 @@ class SQList(object):
             return pickle.loads(value)
         else:
             raise IndexError('{} is out of range'.format(index))
+
+    def sort(self, key=None):
+        if key:
+            if not callable(key):
+                raise TypeError('{} object is not callable'.format(type(key)))
+            self.cursor.execute('''BEGIN TRANSACTION;''')
+            values = self.cursor.execute(
+                    '''SELECT `_rowid_`, `value` FROM `data`;''')
+            for line in values:
+                self.cursor.execute(
+                    '''UPDATE `data` SET `key` = ? WHERE `_rowid_` = ?''',
+                    (key(line[1]), line[0])
+                )
+            self.sql.commit()
+        else:
+            self.gnome_sort()
+
+    def gnome_sort(self):
+        self.cursor.execute('''BEGIN TRANSACTION;''')
+        if self.key:
+            self.cursor.execute('''UPDATE `data` SET `key` = NULL;''')
+            self.key = None
+        length = len(self)
+        position = 0
+        while position < length:
+            values = self.cursor.execute(
+                '''SELECT `_rowid_`, `value` FROM `data` LIMIT 2 OFFSET ?''',
+                (position, )
+            ).fetchall()
+            try:
+                if pickle.loads(values[0][1]) < pickle.loads(values[1],[1]):
+                    self.cursor.executemany(
+                        '''UPDATE `data` SET `value` = ? WHERE `_rowid_` = ?''',
+                        map(reversed, reversed(values))
+                    )
+                    position -= 1
+            except TypeError as e:
+                self.sql.rollback()
+                raise TypeError(e)
+        self.sql.commit()
+
+    def unsort(self):
+        """
+        Method reverts order of elements to order of insertion.
+        :return: None
+        """
+        self.cursor.execute('''UPDATE `data` SET `key` = NULL;''')
+        self.sql.commit()
