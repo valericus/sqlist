@@ -2,7 +2,6 @@
 
 import sqlite3
 import pickle
-import logging
 
 
 class SQList(object):
@@ -19,27 +18,22 @@ class SQList(object):
         if key:
             if callable(key):
                 self.key = key
-                logging.debug('Key %s is callable' % key)
             else:
-                raise TypeError('{} object is not callable'.format(type(key)))
+                raise TypeError('%s object is not callable' % type(key))
         else:
             self.key = lambda x: None
-            logging.debug('Key is not specified, so lambda %s will be used' % self.key)
 
         self.path = path
         self.sql = sqlite3.connect(path)
         self.sql.text_factory = str
-        logging.debug('File %s opened as SQLite database' % path)
         self.cursor = self.sql.cursor()
         if drop:
             self.cursor.execute('''DROP TABLE IF EXISTS `data`;''')
-            logging.debug('Tried to drop table `data` in %s' % path)
         self.cursor.execute(
             '''CREATE TABLE `data` (`key` BLOB,
                                     `value` BLOB NOT NULL);''')
         self.cursor.execute('''CREATE INDEX `keys_index` ON `data` (`key`);''')
         if values:
-            logging.debug('Trying to insert values into database')
             self.cursor.executemany(
                 '''INSERT INTO `data`
                    (`key`, `value`)
@@ -49,7 +43,7 @@ class SQList(object):
             self.sql.commit()
 
     def __repr__(self):
-        return 'sqlist.SQList({})'.format(repr(list(self[:50])))
+        return 'sqlist.SQList([%s])' % ', '.join(map(repr, self[:50]))
 
     def __len__(self):
         result = self.cursor.execute(
@@ -127,7 +121,6 @@ class SQList(object):
         raise StopIteration
 
     def __contains__(self, item):
-        logging.debug('Check if %s (%s) is in SQList' % (repr(item), pickle.dumps(item)))
         result = self.cursor.execute(
             '''SELECT `_rowid_`
                FROM `data`
@@ -135,6 +128,17 @@ class SQList(object):
             (pickle.dumps(item),)
         )
         return bool(result.fetchone())
+
+    def __eq__(self, other):
+        if not hasattr(other, '__len__') and len(self) != len(other):
+                return False
+
+        this = self.cursor.execute(
+                '''SELECT `value` FROM `data` ORDER BY `key` ASC;''')
+        for a, b in zip((pickle.loads(i[0]) for i in this), other):
+            if a != b:
+                return False
+        return True
 
     def append(self, value):
         result = self.cursor.execute(
@@ -166,50 +170,46 @@ class SQList(object):
         else:
             raise IndexError('{} is out of range'.format(index))
 
-    def sort(self, key=None):
+    def sort(self, key=None, reverse=False):
+        def swap_required(a, b):
+            """Check if items should be swapped considering reverse order"""
+            try:
+                if reverse:
+                    return a < b
+                else:
+                    return a > b
+            except TypeError as e:
+                # Values are not comparable
+                self.sql.rollback()
+                raise TypeError(e)
+
         if key:
             if not callable(key):
                 raise TypeError('{} object is not callable'.format(type(key)))
-            self.cursor.execute('''BEGIN TRANSACTION;''')
-            values = self.cursor.execute(
-                    '''SELECT `_rowid_`, `value` FROM `data`;''')
-            for line in values:
-                self.cursor.execute(
-                    '''UPDATE `data` SET `key` = ? WHERE `_rowid_` = ?''',
-                    (key(line[1]), line[0])
-                )
-            self.sql.commit()
         else:
-            self.gnome_sort()
+            def key(x):
+                return x
 
-    def gnome_sort(self):
-        self.cursor.execute('''BEGIN TRANSACTION;''')
         if self.key:
             self.cursor.execute('''UPDATE `data` SET `key` = NULL;''')
             self.key = None
-        length = len(self)
         position = 0
-        while position < length:
+        while True:
             values = self.cursor.execute(
                 '''SELECT `_rowid_`, `value` FROM `data` LIMIT 2 OFFSET ?''',
                 (position, )
             ).fetchall()
-            try:
-                if pickle.loads(values[0][1]) < pickle.loads(values[1],[1]):
-                    self.cursor.executemany(
+            if len(values) < 2:
+                break
+            unpacked = [pickle.loads(i[1]) for i in values]
+            q = ((values[1][1], values[1][0]), (values[0][1], values[0][0]))
+            if swap_required(key(unpacked[0]), key(unpacked[1])):
+                self.cursor.executemany(
                         '''UPDATE `data` SET `value` = ? WHERE `_rowid_` = ?''',
-                        map(reversed, reversed(values))
-                    )
+                        ((values[1][1], values[0][0]),
+                         (values[0][1], values[1][0]))
+                )
+                if position:
                     position -= 1
-            except TypeError as e:
-                self.sql.rollback()
-                raise TypeError(e)
-        self.sql.commit()
-
-    def unsort(self):
-        """
-        Method reverts order of elements to order of insertion.
-        :return: None
-        """
-        self.cursor.execute('''UPDATE `data` SET `key` = NULL;''')
-        self.sql.commit()
+            else:
+                position += 1

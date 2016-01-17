@@ -3,11 +3,8 @@
 import unittest
 import tempfile
 import os
-import logging
 
 import sqlist
-
-logging.basicConfig(level=logging.DEBUG)
 
 
 class TestSQList(unittest.TestCase):
@@ -18,10 +15,18 @@ class TestSQList(unittest.TestCase):
             set(u'Eyjafjallajökull'),
             u'埃亚菲亚德拉冰盖'
         ]
+        self.comparable_values = [
+            'aaa',
+            'ccc',
+            'eee',
+            'ddd',
+            'bbb'
+        ]
         self.sl = sqlist.SQList(self.test_values)
 
     def tearDown(self):
         del self.sl
+        del self.test_values
 
     def test_constructor_creates_correct_table(self):
         """
@@ -81,6 +86,9 @@ class TestSQList(unittest.TestCase):
         self.assertEqual(list(sqlist.SQList(self.test_values, key=key)),
                          sorted(self.test_values, key=key))
 
+    def test_eq_method(self):
+        self.assertTrue(self.sl.__eq__(self.test_values))
+
     def test_iter_method(self):
         self.assertEqual(self.test_values, list(self.sl))
 
@@ -114,9 +122,43 @@ class TestSQList(unittest.TestCase):
         self.assertTrue(test_appendix in self.sl)
 
     def test_pop_method(self):
-        initial_len = len(self.sl)
-
         self.assertEqual(self.sl.pop(), self.test_values.pop())
         self.assertEqual(self.sl.pop(0), self.test_values.pop(0))
         self.assertEqual(self.sl.pop(1), self.test_values.pop(1))
-        self.assertEqual(initial_len - 3, len(self.sl))
+        self.assertEqual(len(self.test_values), len(self.sl))
+
+    def test_sort_method_direct_with_key(self):
+        def key(x):
+            return len(x)
+        sl = sqlist.SQList(self.comparable_values)
+
+        sl.sort(key=key)
+        self.comparable_values.sort(key=key)
+        self.assertEqual(sl, self.comparable_values)
+        self.assertTrue(sl.key is None)
+
+    def test_sort_method_reversed_with_key(self):
+        def key(x):
+            return len(x)
+        sl = sqlist.SQList(self.comparable_values)
+
+        sl.sort(key=key, reverse=True)
+        self.comparable_values.sort(key=key, reverse=True)
+        self.assertEqual(sl, self.comparable_values)
+        self.assertTrue(sl.key is None)
+
+    def test_sort_method_direct_without_key(self):
+        sl = sqlist.SQList(self.comparable_values, key=lambda x: hash(x))
+
+        sl.sort()
+        self.comparable_values.sort()
+        self.assertEqual(list(sl), self.comparable_values)
+        self.assertTrue(sl.key is None)
+
+    def test_sort_method_reversed_without_key(self):
+        sl = sqlist.SQList(self.comparable_values, key=lambda x: hash(x))
+
+        sl.sort(reverse=True)
+        self.comparable_values.sort(reverse=True)
+        self.assertEqual(sl, self.comparable_values)
+        self.assertTrue(sl.key is None)
