@@ -92,6 +92,8 @@ class TestSQList(unittest.TestCase):
             self.sl[i] = self.test_values[i]
             self.assertEqual(self.sl[i], self.test_values[i])
 
+        self.assertEqual(self.sl[0:3], self.test_values[0:3])
+
         self.assertRaises(IndexError, self.sl.__getitem__, len(self.sl) + 5)
         self.assertRaises(IndexError, self.sl.__setitem__, len(self.sl) + 5, 3)
 
