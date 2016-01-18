@@ -1,5 +1,5 @@
-.. image:: https://travis-ci.org/valericus/sqlist.svg?branch=master
-    :target: https://travis-ci.org/valericus/sqlist
+.. image:: https://travis-ci.org/sqlist/sqlist.svg?branch=0.2
+    :target: https://travis-ci.org/sqlist/sqlist
 
 SQList is like `shelve <https://docs.python.org/3/library/shelve.html>`_ but for lists. It serializes data with `pickle <https://docs.python.org/3/library/pickle.html>`_ and puts into SQLite database.
 
