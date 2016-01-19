@@ -140,6 +140,14 @@ class SQList(object):
                 return False
         return True
 
+    def extend(self, values):
+        self.cursor.executemany(
+            '''INSERT INTO `data`
+               (`key`, `value`)
+               VALUES (?, ?);''',
+            zip(map(self.key, values), map(pickle.dumps, values))
+        )
+
     def append(self, value):
         result = self.cursor.execute(
             '''INSERT INTO `data`

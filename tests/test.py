@@ -162,3 +162,8 @@ class TestSQList(unittest.TestCase):
         self.comparable_values.sort(reverse=True)
         self.assertEqual(sl, self.comparable_values)
         self.assertTrue(sl.key is None)
+
+    def test_extend_method(self):
+        self.sl.extend(self.test_values)
+
+        self.assertEqual(self.sl, self.test_values + self.test_values)
