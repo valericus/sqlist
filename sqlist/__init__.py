@@ -40,7 +40,6 @@ class SQList(object):
                    VALUES (?, ?);''',
                 zip(map(self.key, values), map(pickle.dumps, values))
             )
-            self.sql.commit()
 
     def __repr__(self):
         return 'sqlist.SQList([%s])' % ', '.join(map(repr, self[:50]))
@@ -155,7 +154,6 @@ class SQList(object):
                VALUES (?, ?);''',
             (self.key(value), pickle.dumps(value))
         )
-        self.sql.commit()
 
     def pop(self, index=-1):
         offset, stop, stride = slice(index, index + 1).indices(len(self))
