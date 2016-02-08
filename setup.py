@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='sqlist',
-    version='0.2b',
+    version='0.2b1',
     packages=find_packages(),
     description='List-like wrapper for SQLite',
     long_description=open('README.rst').read(),
