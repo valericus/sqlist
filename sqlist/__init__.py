@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import sqlite3
 import pickle
+import sqlite3
+import tempfile
+
+from os import close
 
 
 class SQList(object):
@@ -138,6 +141,12 @@ class SQList(object):
             if a != b:
                 return False
         return True
+
+    @classmethod
+    def temp(cls, key=None, drop=False, suffix='', prefix='', dir=None):
+        handle, path = tempfile.mkstemp(suffix, prefix, dir)
+        close(handle)
+        return cls(path=path, key=key, drop=drop)
 
     def extend(self, values):
         self.cursor.executemany(
