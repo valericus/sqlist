@@ -167,3 +167,11 @@ class TestSQList(unittest.TestCase):
         self.sl.extend(self.test_values)
 
         self.assertEqual(self.sl, self.test_values + self.test_values)
+
+    def test_extend_method_with_noniterable(self):
+        with self.assertRaises(TypeError):
+            self.sl.extend(24)
+
+    def test_temp_class(self):
+        sl = sqlist.SQList.temp()
+        self.assertTrue(os.path.exists(sl.path))
