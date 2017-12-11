@@ -3,6 +3,7 @@
 import unittest
 import tempfile
 import os
+from time import sleep
 
 import sqlist
 
@@ -25,8 +26,9 @@ class TestSQList(unittest.TestCase):
         self.sl = sqlist.SQList(self.test_values)
 
     def tearDown(self):
-        del self.sl
         del self.test_values
+        del self.comparable_values
+        del self.sl
 
     def test_constructor_creates_correct_table(self):
         """
@@ -102,8 +104,9 @@ class TestSQList(unittest.TestCase):
 
         self.assertEqual(self.sl[0:3], self.test_values[0:3])
 
-        self.assertRaises(IndexError, self.sl.__getitem__, len(self.sl) + 5)
-        self.assertRaises(IndexError, self.sl.__setitem__, len(self.sl) + 5, 3)
+        with self.assertRaises(IndexError):
+            spam = self.sl[len(self.sl) + 5]
+            self.sl[len(self.sl) + 5] = 3
 
     def test_delitem_method(self):
         del self.sl[0]
@@ -111,7 +114,8 @@ class TestSQList(unittest.TestCase):
         self.assertEqual(len(self.sl), len(self.test_values) - 1)
         self.assertFalse(self.test_values[0] in self.sl)
 
-        self.assertRaises(IndexError, self.sl.__delitem__, len(self.sl) + 5)
+        with self.assertRaises(IndexError):
+            del self.sl[len(self.sl) + 5]
 
     def test_append_method(self):
         test_appendix = (1, 2, 3)
@@ -163,15 +167,22 @@ class TestSQList(unittest.TestCase):
         self.assertEqual(sl, self.comparable_values)
         self.assertTrue(sl.key is None)
 
-    def test_extend_method(self):
-        self.sl.extend(self.test_values)
+    def test_iadd_method(self):
+        self.sl += self.comparable_values
 
-        self.assertEqual(self.sl, self.test_values + self.test_values)
+        self.assertEqual(self.sl, self.test_values + self.comparable_values)
 
-    def test_extend_method_with_noniterable(self):
+    def test_iadd_method_with_noniterable(self):
         with self.assertRaises(TypeError):
-            self.sl.extend(24)
+            self.sl += 24
 
-    def test_temp_class(self):
+    def test_temp_class_method(self):
         sl = sqlist.SQList.temp()
         self.assertTrue(os.path.exists(sl.path))
+
+    def test_temp_sqlist_auto_remove(self):
+        sl = sqlist.SQList.temp(prefix='auto_remove_test', auto_remove=True)
+        temp_path = sl.path
+        del sl
+        sleep(5)
+        self.assertFalse(os.path.exists(temp_path))

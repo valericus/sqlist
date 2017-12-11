@@ -4,7 +4,7 @@ import pickle
 import sqlite3
 import tempfile
 
-from os import close
+from os import close, remove
 
 from collections import Iterable
 
@@ -13,12 +13,14 @@ class SQList(object):
     """
     List-like object that stores data in SQLite database
     """
-    def __init__(self, values=None, path=':memory:', key=None, drop=True):
+    def __init__(self, values=None, path=':memory:', key=None, drop=True,
+                 auto_remove=False):
         """
         :param values: iterable with elements of new list
         :param path: path to file with SQLite database
         :param key: callable object used to sort values of SQList
         :param drop: drop any data in file at path
+        :param auto_remove: remove file `path` during garbage collection
         """
         if key:
             if callable(key):
@@ -29,6 +31,7 @@ class SQList(object):
             self.key = lambda x: None
 
         self.path = path
+        self.auto_remove = auto_remove
         self.sql = sqlite3.connect(path)
         self.sql.text_factory = str
         self.cursor = self.sql.cursor()
@@ -147,13 +150,32 @@ class SQList(object):
                 return False
         return True
 
+    def __del__(self):
+        self.sql.close()
+        if self.auto_remove:
+            remove(self.path)
+
     @classmethod
-    def temp(cls, key=None, drop=False, suffix='', prefix='', dir=None):
+    def temp(cls, key=None, auto_remove=True,
+             suffix='', prefix='', dir=None):
+        """
+        Create on-disk instance located in system temporary directory
+        (see :func:`tempfile.mkstemp`).
+
+        :param key: callable object used to sort values of SQList
+        :param auto_remove: remove file `path` during garbage collection
+        :param suffix: temporary file name suffix (see :func:`tempfile.mkstemp`)
+        :param prefix: temporary file name prefix (see :func:`tempfile.mkstemp`)
+        :param dir: directory instead of system temporary directory
+         (see :func:`tempfile.mkstemp`)
+        :return: instance of :class:`sqlist.SQList` object
+        """
         handle, path = tempfile.mkstemp(suffix, prefix, dir)
         close(handle)
-        return cls(path=path, key=key, drop=drop)
+        result = cls(path=path, key=key, auto_remove=auto_remove)
+        return result
 
-    def extend(self, other):
+    def __iadd__(self, other):
         if isinstance(other, Iterable):
             self.cursor.executemany(
                 '''INSERT INTO `data`
@@ -162,8 +184,9 @@ class SQList(object):
                 zip(map(self.key, other), map(pickle.dumps, other))
             )
             self.sql.commit()
+            return self
         else:
-            raise TypeError('unsupported operand type(s) for +: '
+            raise TypeError('unsupported operand type(s) for +=: '
                             '\'sqlist.SQList\' and \'%s\'' % type(other))
 
     def append(self, value):
